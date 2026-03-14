@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beyond the Frame Media — Report Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1a1a; --ink2:#4a4a4a; --rule:#d0c8bc;
+  --paper:#faf7f2; --paper2:#f0ebe0;
+  --red:#b5451b; --red2:#e8cfc5;
+  --gold:#c8973a; --blue:#2563a8; --blue2:#dbeafe;
+  --green:#2d8a4e; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper2);color:var(--ink);display:flex;flex-direction:column;}
+
+/* ── TOPBAR ── */
+.tb{background:var(--ink);color:#fff;height:52px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;}
+.tb-brand{display:flex;align-items:center;gap:10px;}
+.tb-logo{width:28px;height:28px;border:2px solid var(--red);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:12px;font-weight:900;color:var(--red);}
+.tb-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;}
+.tb-sub{font-size:9px;color:#888;letter-spacing:1px;text-transform:uppercase;}
+.tb-btns{display:flex;gap:7px;}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:all .14s;}
+.btn-g{background:transparent;color:#ccc;border:1px solid #444;}
+.btn-g:hover{background:#2a2a2a;color:#fff;}
+.btn-r{background:var(--red);color:#fff;}
+.btn-r:hover{background:#8f3614;}
+
+/* ── LAYOUT ── */
+.main{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sb{width:285px;flex-shrink:0;background:var(--white);border-right:1px solid var(--rule);overflow-y:auto;}
+.sb-sec{padding:13px 15px;border-bottom:1px solid var(--rule);}
+.sb-title{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink2);margin-bottom:10px;}
+.lbl{display:block;font-size:11px;font-weight:500;color:var(--ink2);margin-bottom:3px;margin-top:7px;}
+.lbl:first-of-type{margin-top:0;}
+input[type=text],input[type=date],textarea,select{width:100%;padding:6px 8px;border:1px solid var(--rule);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--paper);color:var(--ink);outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--red);}
+textarea{resize:vertical;min-height:54px;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.chip{padding:3px 8px;border-radius:20px;border:1px solid var(--rule);font-size:11px;font-weight:500;cursor:pointer;background:var(--paper);color:var(--ink2);user-select:none;transition:all .12s;}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+.chip:hover:not(.on){border-color:var(--red);color:var(--red);}
+.dz{border:2px dashed var(--rule);border-radius:4px;padding:14px 10px;text-align:center;cursor:pointer;background:var(--paper);margin-top:6px;transition:all .14s;}
+.dz:hover,.dz.over{border-color:var(--red);background:var(--red2);}
+.dz p{font-size:11px;color:var(--ink2);}
+.dz strong{color:var(--red);}
+.add-btn{width:100%;padding:8px;margin-top:9px;background:var(--red);color:#fff;border:none;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
+.add-btn:disabled{background:#bbb;cursor:not-allowed;}
+.add-btn:not(:disabled):hover{background:#8f3614;}
+#fi,#fpi{display:none;}
+
+/* ── CANVAS ── */
+.cv{flex:1;overflow-y:auto;padding:22px;}
+#doc{max-width:820px;margin:0 auto;background:var(--white);box-shadow:0 6px 36px rgba(0,0,0,.14);border-radius:2px;overflow:hidden;}
+
+/* ── DOC HEADER ── */
+.dh{background:var(--ink);color:#fff;padding:30px 38px 26px;position:relative;overflow:hidden;}
+.dh::before{content:'';position:absolute;top:0;right:0;width:160px;height:160px;background:var(--red);opacity:.08;border-radius:50%;transform:translate(50%,-50%);}
+.dh::after{content:'';position:absolute;bottom:0;left:50px;width:240px;height:3px;background:var(--red);}
+.dh-co{font-family:'Playfair Display',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:7px;}
+.dh-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;line-height:1.1;margin-bottom:16px;max-width:480px;}
+.dh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;}
+.dh-item label{font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;display:block;}
+.dh-item .val{font-size:12px;font-weight:500;}
+
+/* ── OVERVIEW ── */
+.ov{padding:18px 38px;border-bottom:1px solid var(--rule);background:var(--paper);}
+.ov-lbl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--ink2);margin-bottom:5px;}
+.ov-txt{font-size:13px;line-height:1.7;}
+
+/* ── FLOOR PLAN ── */
+.fp-sec{padding:20px 38px;border-bottom:1px solid var(--rule);}
+.fp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.eyebrow{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:2px;}
+.sec-head{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;}
+
+/* floor plan wrap — normal mode vs pin-placement mode */
+.fp-wrap{position:relative;width:100%;border:2px solid var(--rule);border-radius:4px;overflow:hidden;background:var(--paper);min-height:110px;cursor:default;}
+.fp-wrap.has-plan{cursor:default;}
+.fp-wrap.placing{cursor:crosshair;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue2);}
+.fp-wrap img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;}
+.fp-empty{display:flex;align-items:center;justify-content:center;min-height:130px;font-size:12px;color:var(--ink2);text-align:center;padding:20px;cursor:pointer;}
+.fp-hint{font-size:10px;color:var(--ink2);margin-top:7px;font-style:italic;min-height:16px;}
+
+/* pin-placement banner — shown above floor plan when placing */
+.place-banner{display:none;background:var(--blue);color:#fff;padding:8px 14px;font-size:12px;font-weight:600;border-radius:3px;margin-bottom:8px;align-items:center;justify-content:space-between;gap:10px;}
+.place-banner.show{display:flex;}
+.place-banner-photo{width:44px;height:44px;border-radius:3px;object-fit:cover;border:2px solid rgba(255,255,255,.5);flex-shrink:0;}
+.place-cancel{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:3px;font-size:11px;padding:4px 9px;cursor:pointer;white-space:nowrap;}
+.place-cancel:hover{background:rgba(255,255,255,.35);}
+
+/* ── PINS ── */
+.pin{position:absolute;width:38px;height:38px;transform-origin:center center;cursor:grab;user-select:none;touch-action:none;z-index:10;}
+.pin:active{cursor:grabbing;}
+.pin.sel{z-index:20;}
+.pin.sel svg{filter:drop-shadow(0 0 5px gold);}
+
+/* ── PHOTOS ── */
+.ph-sec{padding:20px 38px;}
+.ph-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink2);margin-bottom:14px;}
+.zone{margin-bottom:26px;}
+.zone-lbl{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--red);padding:4px 9px;background:var(--red2);border-left:3px solid var(--red);margin-bottom:12px;display:inline-block;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.card{border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:var(--white);}
+.card-img{position:relative;padding-top:62%;background:#111;overflow:hidden;}
+.card-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+.card-num{position:absolute;top:6px;left:6px;background:var(--ink);color:#fff;font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:2px;font-weight:600;z-index:2;}
+.card-badge{position:absolute;top:6px;right:6px;background:var(--red);color:#fff;font-size:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:2px;z-index:2;}
+.card-actions{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:5px 6px;background:linear-gradient(transparent,rgba(0,0,0,.6));opacity:0;transition:opacity .15s;z-index:3;}
+.card:hover .card-actions{opacity:1;}
+.ca-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:3px;font-size:10px;padding:3px 7px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.ca-btn:hover{background:rgba(255,255,255,.28);}
+.ca-btn.del:hover{background:rgba(200,50,30,.55);}
+.card-body{padding:9px 11px 8px;}
+.card-desc{font-size:12px;line-height:1.5;color:var(--ink);margin-bottom:6px;}
+.card-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;}
+.card-ts{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink2);}
+.card-loc{font-size:9px;font-weight:500;color:var(--gold);background:#fdf6e7;padding:2px 6px;border-radius:2px;}
+
+/* pin status row */
+.pin-row{margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;}
+.pin-status{font-size:9px;font-family:'DM Mono',monospace;}
+.pin-status.linked{color:var(--red);}
+.pin-status.unlinked{color:#aaa;}
+/* "Place Pin" button — only shows when floor plan is loaded and photo has no pin */
+.place-pin-btn{font-size:10px;font-weight:600;padding:3px 9px;border-radius:3px;border:none;cursor:pointer;background:var(--blue);color:#fff;white-space:nowrap;display:none;}
+.place-pin-btn:hover{background:#1a4f8f;}
+.place-pin-btn.active{background:var(--green);}
+/* "Move Pin" button — shows when photo already has a pin */
+.move-pin-btn{font-size:10px;font-weight:600;padding:3px 9px;border-radius:3px;border:1px solid var(--rule);cursor:pointer;background:var(--paper);color:var(--ink2);white-space:nowrap;display:none;}
+.move-pin-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* ── INLINE EDIT ── */
+.ep{display:none;padding:9px 11px;border-top:1px solid var(--rule);background:#fffdf9;}
+.ep.open{display:block;}
+.ep label{display:block;font-size:10px;font-weight:600;color:var(--ink2);margin-bottom:3px;margin-top:7px;text-transform:uppercase;letter-spacing:.7px;}
+.ep label:first-of-type{margin-top:0;}
+.ep input,.ep textarea,.ep select{width:100%;padding:5px 7px;border:1px solid var(--rule);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--white);color:var(--ink);outline:none;}
+.ep input:focus,.ep textarea:focus,.ep select:focus{border-color:var(--red);}
+.ep textarea{resize:vertical;min-height:48px;}
+.ep-row{display:flex;gap:6px;margin-top:9px;}
+.ep-save{flex:1;padding:6px;background:var(--green);color:#fff;border:none;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
+.ep-save:hover{background:#1f6437;}
+.ep-cancel{padding:6px 10px;background:transparent;color:var(--ink2);border:1px solid var(--rule);border-radius:3px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;}
+.ep-cancel:hover{background:var(--paper);}
+
+.empty{text-align:center;padding:44px 28px;color:var(--ink2);font-size:13px;}
+
+/* ── FOOTER ── */
+.df{background:var(--paper2);border-top:1px solid var(--rule);padding:18px 38px;display:flex;align-items:center;justify-content:space-between;}
+.df-brand{font-family:'Playfair Display',serif;font-size:12px;font-weight:700;}
+.df-brand span{color:var(--red);}
+.df-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink2);text-align:right;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--ink);color:#fff;padding:9px 16px;border-radius:3px;font-size:12px;border-left:3px solid var(--red);box-shadow:0 4px 18px rgba(0,0,0,.2);transform:translateY(60px);opacity:0;transition:all .28s;z-index:9999;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@media print{
+  body{overflow:visible;}
+  .tb,.sb,.card-actions,.ep,.fp-hint,.place-banner{display:none!important;}
+  .main{display:block;}
+  .cv{padding:0;overflow:visible;}
+  #doc{box-shadow:none;max-width:100%;margin:0;}
+  .dh,.card-badge,.card-num,.zone-lbl{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .card{break-inside:avoid;}
+  @page{margin:.5in;}
+}
+</style>
+</head>
+<body>
+
+<div class="tb">
+  <div class="tb-brand">
+    <div class="tb-logo">BF</div>
+    <div>
+      <div class="tb-name">Beyond the Frame Media</div>
+      <div class="tb-sub">Construction &amp; Insurance Report Builder</div>
+    </div>
+  </div>
+  <div class="tb-btns">
+    <button class="btn btn-g" onclick="clearAll()">Clear</button>
+    <button class="btn btn-g" onclick="window.print()">Print / PDF</button>
+    <button class="btn btn-r" onclick="saveHTML()">Save HTML</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <div class="sb">
+    <div class="sb-sec">
+      <div class="sb-title">Project Info</div>
+      <label class="lbl">Project / Job Name</label>
+      <input type="text" id="pname" placeholder="Smith Residence Remodel" oninput="syncHeader()">
+      <label class="lbl">Property Address</label>
+      <input type="text" id="paddr" placeholder="123 Main St, Loveland, CO" oninput="syncHeader()">
+      <label class="lbl">Report Date</label>
+      <input type="date" id="pdate" oninput="syncHeader()">
+      <label class="lbl">Inspector / Contractor</label>
+      <input type="text" id="pinsp" placeholder="Your name or company" oninput="syncHeader()">
+      <label class="lbl">Claim / Job #</label>
+      <input type="text" id="pnum" placeholder="INS-2024-0001" oninput="syncHeader()">
+      <label class="lbl">Report Type</label>
+      <select id="ptype" onchange="syncHeader()">
+        <option>Construction Progress</option>
+        <option>Insurance Documentation</option>
+        <option>Pre-Construction Assessment</option>
+        <option>Post-Construction Final</option>
+        <option>Water / Fire Damage</option>
+        <option>Scope of Work</option>
+      </select>
+      <label class="lbl">Overview / Notes</label>
+      <textarea id="pov" placeholder="Describe the scope of work or damage assessment..." oninput="syncHeader()"></textarea>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-title">Floor Plan</div>
+      <div class="dz" id="fpdz" onclick="document.getElementById('fpi').click()" ondragover="dzOver(event,'fpdz')" ondrop="fpDrop(event)">
+        <p><strong>Upload floor plan image</strong><br>PNG / JPG from CubiCasa or any source</p>
+      </div>
+      <input type="file" id="fpi" accept="image/*" onchange="loadFloorplan(this)">
+      <p style="margin-top:8px;font-size:10px;color:var(--ink2);line-height:1.6;">
+        <strong>Workflow:</strong> Add your photos first. Then click <strong>"Place Pin"</strong> on any photo card — the floor plan highlights and you click exactly where that photo was taken. Drag to fine-tune. Use <strong>&#8592; &#8594;</strong> to rotate the arrow.
+      </p>
+    </div>
+
+    <div class="sb-sec">
+      <div class="sb-title">Add Photo</div>
+      <label class="lbl">Room / Location</label>
+      <input type="text" id="qloc" placeholder="e.g. Master Bedroom">
+      <label class="lbl">Photo Type</label>
+      <div class="chips" id="ctypes">
+        <div class="chip on" onclick="pickChip(this)">Existing Damage</div>
+        <div class="chip" onclick="pickChip(this)">Demo / Teardown</div>
+        <div class="chip" onclick="pickChip(this)">Rough-In</div>
+        <div class="chip" onclick="pickChip(this)">In Progress</div>
+        <div class="chip" onclick="pickChip(this)">Completed Work</div>
+        <div class="chip" onclick="pickChip(this)">Material</div>
+        <div class="chip" onclick="pickChip(this)">Overview</div>
+        <div class="chip" onclick="pickChip(this)">Detail</div>
+      </div>
+      <label class="lbl">Description</label>
+      <textarea id="qdesc" placeholder="What does this photo document?"></textarea>
+      <div class="dz" id="phdz" onclick="document.getElementById('fi').click()" ondragover="dzOver(event,'phdz')" ondrop="phDrop(event)">
+        <p><strong>Click or drag photos here</strong><br>Multiple files OK</p>
+      </div>
+      <input type="file" id="fi" accept="image/*" multiple onchange="stageFiles(this.files)">
+      <button class="add-btn" id="addbtn" disabled onclick="addPhotos()">No photos staged</button>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="cv">
+    <div id="doc">
+
+      <div class="dh">
+        <div class="dh-co">Beyond the Frame Media</div>
+        <div class="dh-title" id="rtitle">New Report</div>
+        <div class="dh-grid">
+          <div class="dh-item"><label>Address</label><div class="val" id="raddr">—</div></div>
+          <div class="dh-item"><label>Report Type</label><div class="val" id="rtype">Construction Progress</div></div>
+          <div class="dh-item"><label>Date</label><div class="val" id="rdate">—</div></div>
+          <div class="dh-item"><label>Inspector / Contractor</label><div class="val" id="rinsp">—</div></div>
+          <div class="dh-item"><label>Claim / Job #</label><div class="val" id="rnum">—</div></div>
+          <div class="dh-item"><label>Total Photos</label><div class="val" id="rcount">0</div></div>
+        </div>
+      </div>
+
+      <div class="ov" id="rov" style="display:none">
+        <div class="ov-lbl">Project Overview &amp; Notes</div>
+        <div class="ov-txt" id="rovtxt"></div>
+      </div>
+
+      <div class="fp-sec">
+        <div class="fp-hdr">
+          <div>
+            <div class="eyebrow">Reference</div>
+            <div class="sec-head">Floor Plan &amp; Camera Positions</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-g" style="font-size:11px;padding:4px 9px;" id="clrpins" onclick="clearPins()" style="display:none">Clear Pins</button>
+            <button class="btn btn-g" style="font-size:11px;padding:4px 9px;" onclick="removeFP()">Remove Plan</button>
+          </div>
+        </div>
+
+        <!-- Banner shown when in pin-placement mode -->
+        <div class="place-banner" id="place-banner">
+          <img class="place-banner-photo" id="place-banner-img" src="" alt="">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;opacity:.85;margin-bottom:2px;">Placing pin for photo:</div>
+            <div id="place-banner-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;"></div>
+          </div>
+          <button class="place-cancel" onclick="cancelPlacing()">Cancel</button>
+        </div>
+
+        <div class="fp-wrap" id="fpwrap">
+          <div class="fp-empty" id="fpempty" onclick="document.getElementById('fpi').click()">
+            Upload a floor plan to start placing camera pins.
+          </div>
+        </div>
+        <div class="fp-hint" id="fphint"></div>
+      </div>
+
+      <div class="ph-sec">
+        <div class="eyebrow">Photo Documentation</div>
+        <div class="sec-head">Site Photos</div>
+        <div class="ph-count" id="phcount">0 photos</div>
+        <div id="phcontainer">
+          <div class="empty">Add photos using the panel on the left.<br>Then click <strong>Place Pin</strong> on each card to mark its location on the floor plan.</div>
+        </div>
+      </div>
+
+      <div class="df">
+        <div>
+          <div class="df-brand">Beyond the <span>Frame</span> Media</div>
+          <div style="font-size:10px;color:var(--ink2);margin-top:2px;">Construction &amp; Insurance Documentation</div>
+        </div>
+        <div class="df-meta" id="dftime"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+// STATE
+// photos[]: { id, pinId, src, loc, type, desc, ts }
+//   pinId: pin.id this photo owns, or null
+// pins[]:  { id, x, y, angle }
+//   A pin is "owned" when some photo.pinId === pin.id
+//
+// placingFor: photoId currently in pin-placement mode, or null
+// ─────────────────────────────────────────────────────────────────
+let photos     = [];
+let pins       = [];
+let photoSeq   = 0;
+let pinSeq     = 0;
+let fpData     = null;
+let selPin     = null;
+let drag       = null;
+let placingFor = null; // photoId we are currently placing a pin for
+
+const TYPES = ['Existing Damage','Demo / Teardown','Rough-In','In Progress','Completed Work','Material','Overview','Detail'];
+
+// ─────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  G('pdate').value = today();
+  syncHeader();
+  syncFooter();
+  document.addEventListener('keydown', onKey);
+  document.addEventListener('pointerup', () => { drag = null; });
+  document.addEventListener('pointermove', onMove);
+});
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+// ─────────────────────────────────────────────────────────────────
+// HEADER / FOOTER SYNC
+// ─────────────────────────────────────────────────────────────────
+function syncHeader() {
+  const dv = V('pdate');
+  const ds = dv ? new Date(dv+'T12:00:00').toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  T('rtitle', V('pname') || 'New Report');
+  T('raddr',  V('paddr') || '—');
+  T('rdate',  ds);
+  T('rinsp',  V('pinsp') || '—');
+  T('rnum',   V('pnum')  || '—');
+  T('rtype',  V('ptype') || '—');
+  const ov = V('pov');
+  if (ov.trim()) { G('rov').style.display=''; T('rovtxt', ov); }
+  else G('rov').style.display='none';
+}
+function syncFooter() {
+  const d = new Date();
+  G('dftime').innerHTML =
+    'Generated: ' + d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) +
+    '<br>' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CHIPS
+// ─────────────────────────────────────────────────────────────────
+function pickChip(el) {
+  document.querySelectorAll('#ctypes .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+}
+function activeChip() {
+  return (document.querySelector('#ctypes .chip.on') || {textContent:'General'}).textContent;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// FLOOR PLAN
+// ─────────────────────────────────────────────────────────────────
+function loadFloorplan(input) {
+  if (!input.files || !input.files[0]) return;
+  const fr = new FileReader();
+  fr.onload = e => {
+    fpData = e.target.result;
+    buildFPCanvas();
+    renderPhotos(); // refresh "Place Pin" button visibility
+    toast('Floor plan loaded — click Place Pin on any photo card to link it');
+  };
+  fr.readAsDataURL(input.files[0]);
+}
+function fpDrop(e) {
+  e.preventDefault(); G('fpdz').classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFloorplan({files: e.dataTransfer.files});
+}
+function removeFP() {
+  cancelPlacing();
+  fpData = null; pins = []; pinSeq = 0; selPin = null;
+  photos.forEach(p => p.pinId = null);
+  const wrap = G('fpwrap');
+  wrap.className = 'fp-wrap';
+  wrap.innerHTML = '<div class="fp-empty" id="fpempty" onclick="document.getElementById(\'fpi\').click()">Upload a floor plan to start placing camera pins.</div>';
+  wrap.onclick = null;
+  G('fphint').textContent = '';
+  G('clrpins').style.display = 'none';
+  renderPhotos();
+}
+function clearPins() {
+  cancelPlacing();
+  pins = []; pinSeq = 0; selPin = null;
+  photos.forEach(p => p.pinId = null);
+  document.querySelectorAll('.pin').forEach(n => n.remove());
+  G('clrpins').style.display = 'none';
+  G('fphint').textContent = '';
+  renderPhotos();
+  toast('All pins cleared');
+}
+function buildFPCanvas() {
+  const wrap = G('fpwrap');
+  wrap.className = 'fp-wrap has-plan';
+  wrap.innerHTML = `<img src="${fpData}" alt="Floor Plan" draggable="false" id="fpimg">`;
+  // Click on floor plan = place pin (only during placing mode)
+  wrap.addEventListener('click', onFPClick);
+  pins.forEach(p => mountPin(p));
+  G('fphint').textContent = 'Select a pin then use ← → arrow keys to rotate the camera direction arrow.';
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PIN-PLACEMENT MODE
+// Called from each photo card's "Place Pin" button
+// ─────────────────────────────────────────────────────────────────
+function startPlacing(photoId) {
+  if (!fpData) { toast('Upload a floor plan first'); return; }
+  placingFor = photoId;
+  const photo = photos.find(p => p.id === photoId);
+
+  // Show banner
+  const banner = G('place-banner');
+  G('place-banner-img').src = photo.src;
+  T('place-banner-desc', photo.desc || photo.loc);
+  banner.classList.add('show');
+
+  // Highlight floor plan
+  G('fpwrap').className = 'fp-wrap has-plan placing';
+  G('fphint').textContent = 'Click on the floor plan to drop a pin where this photo was taken.';
+
+  // Scroll floor plan into view
+  G('fpwrap').scrollIntoView({behavior:'smooth', block:'center'});
+
+  renderPhotos(); // update button states
+}
+function cancelPlacing() {
+  placingFor = null;
+  G('place-banner').classList.remove('show');
+  if (fpData) {
+    G('fpwrap').className = 'fp-wrap has-plan';
+    G('fphint').textContent = 'Select a pin then use ← → arrow keys to rotate the camera direction arrow.';
+  }
+  renderPhotos();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CLICK ON FLOOR PLAN
+// ─────────────────────────────────────────────────────────────────
+function onFPClick(e) {
+  if (!fpData) return;
+  if (e.target.closest('.pin')) return; // let pin handle it
+
+  if (placingFor !== null) {
+    // ── PLACE PIN MODE ──
+    const photo = photos.find(p => p.id === placingFor);
+    if (!photo) { cancelPlacing(); return; }
+
+    const wrap = G('fpwrap');
+    const rect = wrap.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width  * 100;
+    const py = (e.clientY - rect.top)  / rect.height * 100;
+
+    // Remove old pin if photo already had one
+    if (photo.pinId !== null) {
+      removePinById(photo.pinId);
+    }
+
+    // Create new pin
+    pinSeq++;
+    const pin = { id: pinSeq, x: px, y: py, angle: 0 };
+    pins.push(pin);
+
+    // Link photo <-> pin
+    photo.pinId = pin.id;
+
+    // Mount and select
+    mountPin(pin);
+    selectPin(pin.id);
+    G('clrpins').style.display = '';
+
+    cancelPlacing(); // exit placing mode
+    renderPhotos();
+    toast(`Pin #${pin.id} linked to photo #${photo.id} — drag to fine-tune, ← → to rotate`);
+
+  } else {
+    // ── NORMAL MODE: deselect ──
+    selPin = null;
+    document.querySelectorAll('.pin').forEach(d => d.classList.remove('sel'));
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PIN SVG
+// ─────────────────────────────────────────────────────────────────
+function pinSVG(label, owned) {
+  const fill = owned ? '#b5451b' : '#2563a8';
+  const dark = owned ? '#7a2e10' : '#1a4a88';
+  const fs   = String(label).length > 2 ? '5' : '6.5';
+  return `<svg viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
+    <polygon points="19,1 26,11 22,11 22,17 16,17 16,11 12,11" fill="${fill}" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+    <rect x="5" y="18" width="28" height="18" rx="3.5" fill="${fill}" stroke="white" stroke-width="1.2"/>
+    <circle cx="19" cy="27" r="5.5" fill="white" opacity=".92"/>
+    <circle cx="19" cy="27" r="3.2" fill="${dark}"/>
+    <circle cx="17.4" cy="25.4" r="1" fill="white" opacity=".6"/>
+    <circle cx="30" cy="20" r="5.5" fill="white" stroke="${fill}" stroke-width="1.1"/>
+    <text x="30" y="23.4" text-anchor="middle" font-family="DM Mono,monospace" font-size="${fs}" font-weight="700" fill="${fill}">${label}</text>
+  </svg>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PIN DOM
+// ─────────────────────────────────────────────────────────────────
+function isOwned(pinId) {
+  return photos.some(p => p.pinId === pinId);
+}
+function mountPin(pin) {
+  const wrap = G('fpwrap');
+  if (!wrap || !fpData) return;
+  const old = document.getElementById('pn'+pin.id);
+  if (old) old.remove();
+
+  const div = document.createElement('div');
+  div.className = 'pin';
+  div.id = 'pn' + pin.id;
+  div.innerHTML = pinSVG(pin.id, isOwned(pin.id));
+  applyPos(div, pin);
+
+  div.addEventListener('pointerdown', e => {
+    e.stopPropagation(); e.preventDefault();
+    selectPin(pin.id);
+    const wrap = G('fpwrap');
+    const rect = wrap.getBoundingClientRect();
+    drag = { pinId: pin.id, ox: e.clientX, oy: e.clientY, px: pin.x, py: pin.y };
+    div.setPointerCapture(e.pointerId);
+  });
+  div.addEventListener('click', e => { e.stopPropagation(); selectPin(pin.id); });
+
+  wrap.appendChild(div);
+}
+function applyPos(div, pin) {
+  div.style.left      = pin.x + '%';
+  div.style.top       = pin.y + '%';
+  div.style.transform = `translate(-50%,-50%) rotate(${pin.angle}deg)`;
+}
+// Refresh SVG only — never touches position
+function refreshSVG(pinId) {
+  const pin = pins.find(p => p.id === pinId);
+  const div = document.getElementById('pn' + pinId);
+  if (!pin || !div) return;
+  div.innerHTML = pinSVG(pin.id, isOwned(pinId));
+}
+// Move only — never touches innerHTML
+function movePin(pin) {
+  const div = document.getElementById('pn' + pin.id);
+  if (div) applyPos(div, pin);
+}
+function selectPin(id) {
+  document.querySelectorAll('.pin').forEach(d => d.classList.remove('sel'));
+  selPin = id;
+  const d = document.getElementById('pn' + id);
+  if (d) d.classList.add('sel');
+}
+function removePinById(pinId) {
+  pins = pins.filter(p => p.id !== pinId);
+  const d = document.getElementById('pn' + pinId);
+  if (d) d.remove();
+  if (selPin === pinId) selPin = null;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DRAG
+// ─────────────────────────────────────────────────────────────────
+function onMove(e) {
+  if (!drag) return;
+  const wrap = G('fpwrap');
+  const rect = wrap.getBoundingClientRect();
+  const pin  = pins.find(p => p.id === drag.pinId);
+  if (!pin) return;
+  pin.x = Math.max(0, Math.min(100, drag.px + (e.clientX - drag.ox) / rect.width  * 100));
+  pin.y = Math.max(0, Math.min(100, drag.py + (e.clientY - drag.oy) / rect.height * 100));
+  movePin(pin); // position only, no SVG rewrite
+}
+
+// ─────────────────────────────────────────────────────────────────
+// KEYBOARD — rotate / delete selected pin
+// ─────────────────────────────────────────────────────────────────
+function onKey(e) {
+  if (selPin === null) return;
+  const pin = pins.find(p => p.id === selPin);
+  if (!pin) return;
+  if (e.key==='ArrowLeft'  || e.key==='ArrowDown')  { e.preventDefault(); pin.angle=(pin.angle-15+360)%360; movePin(pin); }
+  if (e.key==='ArrowRight' || e.key==='ArrowUp')    { e.preventDefault(); pin.angle=(pin.angle+15)%360;     movePin(pin); }
+  if (e.key==='Delete'     || e.key==='Backspace')  {
+    // Unlink photo
+    const photo = photos.find(p => p.pinId === selPin);
+    if (photo) photo.pinId = null;
+    removePinById(selPin);
+    if (!pins.length) G('clrpins').style.display = 'none';
+    renderPhotos();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// STAGE + ADD PHOTOS
+// ─────────────────────────────────────────────────────────────────
+let staged = [];
+function phDrop(e) {
+  e.preventDefault(); G('phdz').classList.remove('over');
+  stageFiles(e.dataTransfer.files);
+}
+function stageFiles(files) {
+  if (!files || !files.length) return;
+  staged = Array.from(files);
+  const btn = G('addbtn');
+  btn.disabled = false;
+  btn.textContent = `Add ${staged.length} Photo${staged.length>1?'s':''} to Report`;
+  toast(`${staged.length} photo${staged.length>1?'s':''} staged`);
+}
+function addPhotos() {
+  if (!staged.length) return;
+  const loc  = V('qloc').trim() || 'Unspecified Area';
+  const type = activeChip();
+  const desc = V('qdesc').trim();
+  const ts   = new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  let done = 0;
+  const incoming = new Array(staged.length);
+  staged.forEach((file, i) => {
+    const fr = new FileReader();
+    fr.onload = e => {
+      photoSeq++;
+      incoming[i] = { id: photoSeq, pinId: null, src: e.target.result, loc, type, desc, ts };
+      if (++done === staged.length) {
+        incoming.forEach(p => photos.push(p));
+        renderPhotos();
+        G('rcount').textContent  = photos.length;
+        G('phcount').textContent = `${photos.length} photo${photos.length!==1?'s':''}`;
+        syncFooter();
+        staged = [];
+        G('addbtn').disabled = true;
+        G('addbtn').textContent = 'No photos staged';
+        G('qdesc').value = '';
+        G('fi').value = '';
+        toast('Photos added — click Place Pin on each card to mark locations');
+      }
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DELETE PHOTO
+// ─────────────────────────────────────────────────────────────────
+function deletePhoto(photoId) {
+  const photo = photos.find(p => p.id === photoId);
+  if (!photo) return;
+  if (photo.pinId !== null) {
+    removePinById(photo.pinId);
+    if (!pins.length) G('clrpins').style.display = 'none';
+  }
+  if (placingFor === photoId) cancelPlacing();
+  photos = photos.filter(p => p.id !== photoId);
+  renderPhotos();
+  G('rcount').textContent  = photos.length;
+  G('phcount').textContent = `${photos.length} photo${photos.length!==1?'s':''}`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INLINE EDIT
+// ─────────────────────────────────────────────────────────────────
+function openEdit(photoId) {
+  document.querySelectorAll('.ep.open').forEach(ep => { if (+ep.dataset.pid !== photoId) ep.classList.remove('open'); });
+  const photo = photos.find(p => p.id === photoId);
+  const ep    = document.getElementById('ep'+photoId);
+  if (!photo || !ep) return;
+  ep.querySelector('.epdesc').value = photo.desc;
+  ep.querySelector('.eploc').value  = photo.loc;
+  ep.querySelector('.eptype').value = photo.type;
+  ep.classList.add('open');
+}
+function closeEdit(photoId) {
+  const ep = document.getElementById('ep'+photoId);
+  if (ep) ep.classList.remove('open');
+}
+function saveEdit(photoId) {
+  const photo = photos.find(p => p.id === photoId);
+  const ep    = document.getElementById('ep'+photoId);
+  if (!photo || !ep) return;
+  photo.desc = ep.querySelector('.epdesc').value.trim();
+  photo.loc  = ep.querySelector('.eploc').value.trim() || 'Unspecified Area';
+  photo.type = ep.querySelector('.eptype').value;
+  ep.classList.remove('open');
+  renderPhotos();
+  toast('Photo updated ✓');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER PHOTOS
+// ─────────────────────────────────────────────────────────────────
+function renderPhotos() {
+  const c = G('phcontainer');
+  if (!photos.length) {
+    c.innerHTML = '<div class="empty">Add photos using the panel on the left.<br>Then click <strong>Place Pin</strong> on each card to mark its location on the floor plan.</div>';
+    return;
+  }
+  const groups = {};
+  photos.forEach(p => { if (!groups[p.loc]) groups[p.loc]=[]; groups[p.loc].push(p); });
+
+  let html = '';
+  Object.keys(groups).forEach(loc => {
+    html += `<div class="zone"><div class="zone-lbl">📍 ${E(loc)}</div><div class="grid">`;
+    groups[loc].forEach(p => {
+      const isPlacing  = placingFor === p.id;
+      const hasPin     = p.pinId !== null;
+      const hasFP      = !!fpData;
+
+      // Pin status line
+      const pinStatus  = hasPin
+        ? `<div class="pin-status linked">📌 Pin #${p.pinId} linked</div>`
+        : `<div class="pin-status unlinked">No pin yet</div>`;
+
+      // Place Pin button — show if floor plan loaded and not already placing this one
+      const placeBtnStyle = hasFP && !isPlacing ? 'display:inline-block' : 'display:none';
+      const moveBtnStyle  = hasPin && hasFP && !isPlacing ? 'display:inline-block' : 'display:none';
+      const placeLabel    = hasPin ? 'Reposition' : 'Place Pin';
+      const placeColor    = hasPin ? 'background:#555' : 'background:var(--blue)';
+
+      // "Placing..." indicator
+      const placingIndicator = isPlacing
+        ? `<div style="font-size:10px;font-weight:600;color:var(--blue);margin-top:4px;">👆 Click the floor plan above to place this pin...</div>`
+        : '';
+
+      const typeOpts = TYPES.map(t => `<option${t===p.type?' selected':''}>${E(t)}</option>`).join('');
+
+      html += `
+      <div class="card" id="card${p.id}" style="${isPlacing ? 'outline:2px solid var(--blue);' : ''}">
+        <div class="card-img">
+          <img src="${p.src}" alt="${E(p.desc)}" loading="lazy">
+          <div class="card-num">#${p.id}</div>
+          <div class="card-badge">${E(p.type)}</div>
+          <div class="card-actions">
+            <button class="ca-btn" onclick="openEdit(${p.id})">✏️ Edit</button>
+            <button class="ca-btn del" onclick="deletePhoto(${p.id})">✕ Delete</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">${p.desc ? E(p.desc) : '<span style="color:#bbb;font-style:italic;">No description</span>'}</div>
+          <div class="card-meta">
+            <div class="card-ts">🕐 ${p.ts}</div>
+            <div class="card-loc">${E(p.loc)}</div>
+          </div>
+          <div class="pin-row">
+            ${pinStatus}
+            <button style="${placeBtnStyle};font-size:10px;font-weight:600;padding:3px 9px;border-radius:3px;border:none;cursor:pointer;${placeColor};color:#fff;" onclick="startPlacing(${p.id})">${placeLabel}</button>
+          </div>
+          ${placingIndicator}
+        </div>
+        <div class="ep" id="ep${p.id}" data-pid="${p.id}">
+          <label>Description</label>
+          <textarea class="epdesc" rows="3">${E(p.desc)}</textarea>
+          <label>Room / Location</label>
+          <input type="text" class="eploc" value="${E(p.loc)}">
+          <label>Photo Type</label>
+          <select class="eptype">${typeOpts}</select>
+          <div class="ep-row">
+            <button class="ep-save" onclick="saveEdit(${p.id})">Save Changes</button>
+            <button class="ep-cancel" onclick="closeEdit(${p.id})">Cancel</button>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+  c.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SAVE HTML
+// ─────────────────────────────────────────────────────────────────
+function saveHTML() {
+  const projName = V('pname') || 'Report';
+
+  let fpHTML = '';
+  if (fpData) {
+    let overlay = '';
+    pins.forEach(pin => {
+      overlay += `<div style="position:absolute;left:${pin.x}%;top:${pin.y}%;width:38px;height:38px;transform:translate(-50%,-50%) rotate(${pin.angle}deg);pointer-events:none;">${pinSVG(pin.id, isOwned(pin.id))}</div>`;
+    });
+    fpHTML = `<div style="position:relative;display:inline-block;width:100%;border:1px solid #d0c8bc;border-radius:4px;overflow:hidden;"><img src="${fpData}" style="display:block;width:100%;height:auto;" alt="Floor Plan">${overlay}</div>`;
+    if (pins.length) fpHTML += `<p style="font-size:10px;color:#4a4a4a;margin-top:7px;font-style:italic;">📌 ${pins.length} camera pin${pins.length!==1?'s':''} — orange = linked to a photo, arrow shows camera direction.</p>`;
+  } else {
+    fpHTML = `<p style="padding:18px;background:#faf7f2;border:1px solid #d0c8bc;border-radius:4px;text-align:center;color:#4a4a4a;font-size:12px;">No floor plan uploaded.</p>`;
+  }
+
+  let phHTML = '';
+  if (photos.length) {
+    const groups = {};
+    photos.forEach(p => { if (!groups[p.loc]) groups[p.loc]=[]; groups[p.loc].push(p); });
+    Object.keys(groups).forEach(loc => {
+      phHTML += `<div style="margin-bottom:26px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#b5451b;padding:4px 9px;background:#e8cfc5;border-left:3px solid #b5451b;margin-bottom:12px;display:inline-block;">📍 ${E(loc)}</div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">`;
+      groups[loc].forEach(p => {
+        const pr = p.pinId !== null ? `<div style="font-size:9px;color:#b5451b;font-family:monospace;margin-top:4px;">📌 Pin #${p.pinId} on floor plan</div>` : '';
+        phHTML += `<div style="border:1px solid #d0c8bc;border-radius:4px;overflow:hidden;break-inside:avoid;">
+          <div style="position:relative;padding-top:62%;background:#111;overflow:hidden;">
+            <img src="${p.src}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:6px;left:6px;background:#1a1a1a;color:#fff;font-family:monospace;font-size:9px;padding:2px 6px;border-radius:2px;font-weight:700;">#${p.id}</div>
+            <div style="position:absolute;top:6px;right:6px;background:#b5451b;color:#fff;font-size:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 5px;border-radius:2px;">${E(p.type)}</div>
+          </div>
+          <div style="padding:9px 11px;">
+            <div style="font-size:12px;line-height:1.5;color:#1a1a1a;margin-bottom:6px;">${p.desc ? E(p.desc) : '<em style="color:#bbb">No description</em>'}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;">
+              <div style="font-family:monospace;font-size:9px;color:#4a4a4a;">🕐 ${p.ts}</div>
+              <div style="font-size:9px;font-weight:500;color:#c8973a;background:#fdf6e7;padding:2px 5px;border-radius:2px;">${E(p.loc)}</div>
+            </div>
+            ${pr}
+          </div>
+        </div>`;
+      });
+      phHTML += '</div></div>';
+    });
+  } else {
+    phHTML = '<p style="text-align:center;padding:30px;color:#4a4a4a;">No photos added.</p>';
+  }
+
+  const ovB = G('rov').style.display!=='none'
+    ? `<div style="padding:18px 38px;border-bottom:1px solid #d0c8bc;background:#faf7f2;"><div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#4a4a4a;margin-bottom:5px;">Project Overview &amp; Notes</div><div style="font-size:13px;line-height:1.7;">${E(G('rovtxt').textContent)}</div></div>` : '';
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${E(G('rtitle').textContent)} — Beyond the Frame Media</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#f0ebe0;color:#1a1a1a;padding:28px;}
+#doc{max-width:820px;margin:0 auto;background:#fff;box-shadow:0 6px 36px rgba(0,0,0,.14);border-radius:2px;overflow:hidden;}
+.dh{background:#1a1a1a;color:#fff;padding:30px 38px 26px;position:relative;overflow:hidden;}
+.dh::before{content:'';position:absolute;top:0;right:0;width:160px;height:160px;background:#b5451b;opacity:.08;border-radius:50%;transform:translate(50%,-50%);}
+.dh::after{content:'';position:absolute;bottom:0;left:50px;width:240px;height:3px;background:#b5451b;}
+@media print{body{background:#fff;padding:0;}#doc{box-shadow:none;max-width:100%;margin:0;}
+.dh{-webkit-print-color-adjust:exact;print-color-adjust:exact;}@page{margin:.5in;}}</style></head>
+<body><div id="doc">
+<div class="dh">
+  <div style="font-family:'Playfair Display',serif;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#b5451b;margin-bottom:7px;">Beyond the Frame Media</div>
+  <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;line-height:1.1;margin-bottom:16px;max-width:480px;">${E(G('rtitle').textContent)}</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;">
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Address</div><div style="font-size:12px;font-weight:500;">${E(G('raddr').textContent)}</div></div>
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Report Type</div><div style="font-size:12px;font-weight:500;">${E(G('rtype').textContent)}</div></div>
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Date</div><div style="font-size:12px;font-weight:500;">${E(G('rdate').textContent)}</div></div>
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Inspector</div><div style="font-size:12px;font-weight:500;">${E(G('rinsp').textContent)}</div></div>
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Claim / Job #</div><div style="font-size:12px;font-weight:500;">${E(G('rnum').textContent)}</div></div>
+    <div><div style="font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#888;margin-bottom:2px;">Total Photos</div><div style="font-size:12px;font-weight:500;">${photos.length}</div></div>
+  </div>
+</div>
+${ovB}
+<div style="padding:20px 38px;border-bottom:1px solid #d0c8bc;">
+  <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#b5451b;margin-bottom:2px;">Reference</div>
+  <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:12px;">Floor Plan &amp; Camera Positions</div>
+  ${fpHTML}
+</div>
+<div style="padding:20px 38px;">
+  <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#b5451b;margin-bottom:2px;">Photo Documentation</div>
+  <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:4px;">Site Photos</div>
+  <div style="font-family:'DM Mono',monospace;font-size:11px;color:#4a4a4a;margin-bottom:14px;">${photos.length} photo${photos.length!==1?'s':''}</div>
+  ${phHTML}
+</div>
+<div style="background:#f0ebe0;border-top:1px solid #d0c8bc;padding:18px 38px;display:flex;align-items:center;justify-content:space-between;">
+  <div><div style="font-family:'Playfair Display',serif;font-size:12px;font-weight:700;">Beyond the <span style="color:#b5451b;">Frame</span> Media</div>
+  <div style="font-size:10px;color:#4a4a4a;margin-top:2px;">Construction &amp; Insurance Documentation</div></div>
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:#4a4a4a;text-align:right;">${G('dftime').innerHTML.replace('<br>',' · ')}</div>
+</div>
+</div></body></html>`;
+
+  const blob = new Blob([html],{type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=projName.replace(/[^a-z0-9]/gi,'_')+'_BeyondTheFrame.html'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Report saved ✓');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CLEAR ALL
+// ─────────────────────────────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Start a new report? This will clear everything.')) return;
+  photos=[]; pins=[]; photoSeq=0; pinSeq=0; selPin=null; drag=null; staged=[]; fpData=null; placingFor=null;
+  ['pname','paddr','pinsp','pnum','pov'].forEach(id => G(id).value='');
+  G('pdate').value = today();
+  G('ptype').selectedIndex = 0;
+  G('qloc').value=''; G('qdesc').value='';
+  G('addbtn').disabled=true; G('addbtn').textContent='No photos staged';
+  G('place-banner').classList.remove('show');
+  removeFP(); renderPhotos(); syncHeader(); syncFooter();
+  G('rcount').textContent='0'; G('phcount').textContent='0 photos';
+  toast('Cleared');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────
+function G(id)    { return document.getElementById(id); }
+function V(id)    { return (G(id)||{}).value || ''; }
+function T(id, s) { const e=G(id); if(e) e.textContent=s; }
+function E(s)     { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function dzOver(e,id) { e.preventDefault(); G(id).classList.add('over'); }
+function toast(msg) {
+  const t=G('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
